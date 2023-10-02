@@ -24,6 +24,7 @@ impl_as_code_page_mark!(
   Ascii => crate::CodePageMark::Utf8,
   UnicodeLossy => crate::CodePageMark::Utf8,
   Unicode => crate::CodePageMark::Utf8,
+  NoConv => crate::CodePageMark::Delegated,
 );
 
 #[cfg(feature = "yore")]
@@ -93,6 +94,13 @@ pub struct Unicode;
 #[derive(Copy, Clone, Debug)]
 pub struct Ascii;
 
+// This unit struct can be used as an [`Encoding`] to try to avoid code conversion into Utf8.
+// This module does not convert any data and it is delegated to the caller of this module.
+#[derive(Copy, Clone, Debug)]
+pub struct NoConv;
+
+
+
 /// Tries to decode as Unicode, replaces unknown codepoints with the replacement character.
 impl Encoding for UnicodeLossy {
     fn decode<'a>(&self, bytes: &'a [u8]) -> Result<Cow<'a, str>, DecodeError> {
@@ -136,6 +144,19 @@ impl Encoding for Ascii {
     fn encode<'a>(&self, s: &'a str) -> Result<Cow<'a, [u8]>, EncodeError> {
         Ok(s.as_bytes().into())
     }
+}
+
+/// As there is no proper way to convert to Utf8, we just raise an error.
+impl Encoding for NoConv {
+    fn decode<'a>(&self, _bytes: &'a [u8]) -> Result<Cow<'a, str>, DecodeError> {
+        Err(DecodeError::NoApplicableDecoder)
+
+    }
+
+    fn encode<'a>(&self, _s: &'a str) -> Result<Cow<'a, [u8]>, EncodeError> {
+        Err(EncodeError::NoApplicableEncoder)
+    }
+
 }
 
 #[derive(Clone)]

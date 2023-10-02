@@ -243,6 +243,7 @@ pub enum DecodeError {
     NotAscii,
     #[cfg(feature = "yore")]
     Yore(yore::DecodeError),
+    NoApplicableDecoder,
 }
 
 impl From<String> for DecodeError {
@@ -272,6 +273,7 @@ pub enum EncodeError {
     Message(String),
     #[cfg(feature = "yore")]
     Yore(yore::EncodeError),
+    NoApplicableEncoder,
 }
 
 impl From<String> for EncodeError {

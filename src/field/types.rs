@@ -6,7 +6,7 @@ use std::str::FromStr;
 use crate::Encoding;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::error::ErrorKind;
+use crate::error::{DecodeError, ErrorKind};
 use crate::field::FieldInfo;
 use crate::memo::MemoReader;
 use crate::writing::WritableAsDbaseField;
@@ -121,6 +121,7 @@ pub enum FieldValue {
     ///
     /// A string full of 'pad bytes' is considered `None`
     Character(Option<String>),
+    BinCharacter(Option<Vec<u8>>),
     /// dBase type to represent numbers, stored as String in the file
     Numeric(Option<f64>),
     /// dBase type for boolean values, stored as a character in the file
@@ -164,7 +165,12 @@ impl FieldValue {
                 if value.is_empty() {
                     FieldValue::Character(None)
                 } else {
-                    FieldValue::Character(Some(encoding.decode(value)?.to_string()))
+                    let decoded = encoding.decode(value);
+                    match decoded{
+                        Ok(text) => FieldValue::Character(Some(text.to_string())),
+                        Err(DecodeError::NoApplicableDecoder) => FieldValue::BinCharacter(Some(Vec::from(value))),
+                        Err(_) => panic!("Non expected decoder error"),
+                    }
                 }
             }
             FieldType::Numeric => {
@@ -246,6 +252,7 @@ impl FieldValue {
     pub fn field_type(&self) -> FieldType {
         match self {
             FieldValue::Character(_) => FieldType::Character,
+            FieldValue::BinCharacter(_) => FieldType::Character,
             FieldValue::Numeric(_) => FieldType::Numeric,
             FieldValue::Logical(_) => FieldType::Logical,
             FieldValue::Integer(_) => FieldType::Integer,
@@ -533,6 +540,7 @@ impl WritableAsDbaseField for FieldValue {
         } else {
             match self {
                 FieldValue::Character(value) => value.write_as(field_info, encoding, dst),
+                FieldValue::BinCharacter(_) => unimplemented!("Currently under implementation"),
                 FieldValue::Numeric(value) => value.write_as(field_info, encoding, dst),
                 FieldValue::Logical(value) => value.write_as(field_info, encoding, dst),
                 FieldValue::Date(value) => value.write_as(field_info, encoding, dst),

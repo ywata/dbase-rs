@@ -54,6 +54,8 @@ pub enum CodePageMark {
     CP1253,
     Utf8,
     Invalid,
+    // The storeed data is literally provided to caller with BinCharacter
+    Delegated,
 }
 
 impl CodePageMark {
@@ -95,7 +97,11 @@ impl CodePageMark {
         }
         #[cfg(not(feature = "yore"))]
         {
-            Some(DynEncoding::new(crate::encoding::UnicodeLossy))
+            use crate::encoding::{UnicodeLossy, NoConv};
+            Some(match self{
+                CodePageMark::Delegated => DynEncoding::new(NoConv),
+                _ => DynEncoding::new(crate::encoding::UnicodeLossy),
+            })
         }
     }
 }
@@ -107,6 +113,7 @@ impl From<u8> for CodePageMark {
             0x01 => Self::CP437,
             0x02 => Self::CP850,
             0x03 => Self::CP1252,
+            0x13 => Self::Delegated,
             // 0x04 => Self::StandardMacIntosh,
             0x64 => Self::CP852,
             0x65 => Self::CP866,
