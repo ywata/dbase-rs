@@ -17,6 +17,7 @@ const STATIONS: &str = "./tests/data/stations.dbf";
 const STATIONS_WITH_DELETED: &str = "./tests/data/stations_with_deleted.dbf";
 #[cfg(feature = "yore")]
 const CP850_DBF: &str = "tests/data/cp850.dbf";
+const SJIS_DBF :&str = "tests/data/N01-07L-2K-10_Road.dbf";
 
 fn write_read_compare<R>(records: &Vec<R>, writer_builder: TableWriterBuilder)
 where
@@ -294,6 +295,36 @@ fn non_unicode_codepages() {
         records[0].get("TEXT"),
         Some(&dbase::FieldValue::Character(Some("Äöü!§$%&/".to_string())))
     );
+}
+
+#[test]
+fn sjis_codepages() {
+    let mut reader =
+        dbase::Reader::from_path(SJIS_DBF).unwrap();
+    let records = reader.read().unwrap();
+
+    assert_eq!(
+        records[0].get("TEXT"),
+        Some(&dbase::FieldValue::Character(Some("Äöü!§$%&/".to_string())))
+    );
+
+    // Write back with same encoding
+    let mut cursor = Cursor::new(Vec::<u8>::new());
+    {
+        let writer = TableWriterBuilder::from_reader(reader).build_with_dest(&mut cursor);
+        writer.write_records(&records).unwrap();
+    }
+
+    cursor.set_position(0);
+
+    // Read again
+//    let mut reader = Reader::new_with_encoding(cursor, yore::code_pages::CP850).unwrap();
+//    let records = reader.read().unwrap();
+//
+//    assert_eq!(
+//        records[0].get("TEXT"),
+//        Some(&dbase::FieldValue::Character(Some("Äöü!§$%&/".to_string())))
+//    );
 }
 
 dbase::dbase_record!(
