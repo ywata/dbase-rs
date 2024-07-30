@@ -94,7 +94,8 @@ impl TableProvider for DbaseTable {
                     FieldType::Integer => DataType::Int32,
                     FieldType::Logical => DataType::Boolean,
                     FieldType::Memo => DataType::Utf8,
-                    FieldType::Numeric => DataType::Float64,
+                    //XXX
+                    FieldType::Numeric => DataType::Utf8,
                 };
                 Field::new(field.name().to_lowercase(), ftype, true)
             })

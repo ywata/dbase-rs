@@ -1,5 +1,6 @@
 use super::{types, FieldType, FieldValue};
 
+use crate::field::types::NString;
 /// Errors that can happen when trying to convert a FieldValue into
 /// a more concrete type
 #[derive(Debug)]
@@ -17,6 +18,7 @@ pub enum FieldConversionError {
     /// and the user tried to convert it into a non Option-Type
     NoneValue,
 }
+
 
 impl std::fmt::Display for FieldConversionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -69,7 +71,7 @@ macro_rules! impl_try_from_field_value_for_ {
     };
 }
 
-impl_try_from_field_value_for_!(FieldValue::Numeric => Option<f64>);
+impl_try_from_field_value_for_!(FieldValue::Numeric => Option<NString>);
 
 impl_try_from_field_value_for_!(FieldValue::Float => Option<f32>);
 impl_try_from_field_value_for_!(FieldValue::Float(Some(v)) => f32);
@@ -90,7 +92,7 @@ impl TryFrom<FieldValue> for f64 {
 
     fn try_from(value: FieldValue) -> Result<Self, Self::Error> {
         match value {
-            FieldValue::Numeric(Some(v)) => Ok(v),
+            FieldValue::Numeric(Some(NString(v))) => v.parse::<f64>().map_err(|_|FieldConversionError::IncompatibleType),
             FieldValue::Numeric(None) => Err(FieldConversionError::NoneValue),
             FieldValue::Currency(c) => Ok(c),
             FieldValue::Double(d) => Ok(d),
@@ -122,8 +124,8 @@ macro_rules! impl_from_type_for_field_value (
 impl_from_type_for_field_value!(Option<String> => FieldValue::Character);
 impl_from_type_for_field_value!(String => FieldValue::Character(Some(s)));
 
-impl_from_type_for_field_value!(Option<f64> => FieldValue::Numeric);
-impl_from_type_for_field_value!(f64 => FieldValue::Numeric(Some(v)));
+impl_from_type_for_field_value!(Option<NString> => FieldValue::Numeric);
+impl_from_type_for_field_value!(NString => FieldValue::Numeric(Some(v)));
 
 impl_from_type_for_field_value!(Option<f32> => FieldValue::Float);
 impl_from_type_for_field_value!(f32 => FieldValue::Float(Some(v)));

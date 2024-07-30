@@ -4,11 +4,13 @@ extern crate dbase;
 use std::io::{Cursor, Read, Seek, Write};
 
 use dbase::{
-    Date, DateTime, FieldIOError, FieldIterator, FieldName, FieldValue, FieldWriter,
+    Date, DateTime, FieldIOError, FieldIterator, FieldName, FieldValue, FieldWriter, NString,
     ReadableRecord, Reader, Record, TableWriterBuilder, Time, WritableRecord,
 };
 use std::convert::{TryFrom, TryInto};
 use std::fmt::Debug;
+
+
 
 const LINE_DBF: &str = "./tests/data/line.dbf";
 const NONE_FLOAT_DBF: &str = "./tests/data/contain_none_float.dbf";
@@ -47,7 +49,7 @@ fn test_none_float() {
     );
     expected_fields.insert("value_f".to_owned(), dbase::FieldValue::Float(Some(12.345)));
     expected_fields.insert("value_f_non".to_owned(), dbase::FieldValue::Float(None));
-    expected_fields.insert("value_n".to_owned(), dbase::FieldValue::Numeric(Some(4.0)));
+    expected_fields.insert("value_n".to_owned(), dbase::FieldValue::Numeric(Some(NString::new("4"))));
     expected_fields.insert("value_n_non".to_owned(), dbase::FieldValue::Numeric(None));
 
     assert_eq!(records[0], expected_fields);
@@ -95,7 +97,7 @@ fn test_read_numeric_value_null_padded() {
     let records = dbase::read(NULL_PADDED_NUMERIC_DBF).unwrap();
     assert_eq!(records.len(), 1);
     let mut expected_fields = Record::default();
-    expected_fields.insert("number".to_owned(), dbase::FieldValue::Numeric(Some(1234.)));
+    expected_fields.insert("number".to_owned(), dbase::FieldValue::Numeric(Some(NString::new("1234."))));
     assert_eq!(records[0], expected_fields);
 }
 

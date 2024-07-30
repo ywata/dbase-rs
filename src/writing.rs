@@ -311,7 +311,10 @@ mod private {
     impl_sealed_for!(Option<crate::field::types::Date>);
     impl_sealed_for!(crate::field::types::FieldValue);
     impl_sealed_for!(crate::field::types::DateTime);
+    impl_sealed_for!(crate::field::types::NString);
+    impl_sealed_for!(Option<crate::field::types::NString>);
 }
+
 
 /// Trait implemented by types we can write as dBase types
 ///

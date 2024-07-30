@@ -9,6 +9,7 @@ mod conversion;
 pub mod types;
 
 use self::types::FieldType;
+use self::types::NString;
 use crate::{Encoding, ErrorKind, FieldValue};
 pub use conversion::FieldConversionError;
 

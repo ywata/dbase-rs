@@ -11,6 +11,16 @@ use crate::field::FieldInfo;
 use crate::memo::MemoReader;
 use crate::writing::WritableAsDbaseField;
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct NString(pub String);
+
+impl NString {
+    pub fn new<S: Into<String>>(s: S) -> Self {
+        NString(s.into())
+    }
+}
+
+
 /// Enum listing all the field types we know of
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum FieldType {
@@ -111,6 +121,7 @@ impl std::fmt::Display for FieldType {
     }
 }
 
+
 /// Enum where each variant stores the record value
 #[derive(Debug, Clone, PartialEq)]
 pub enum FieldValue {
@@ -123,7 +134,8 @@ pub enum FieldValue {
     Character(Option<String>),
     BinCharacter(Option<Vec<u8>>),
     /// dBase type to represent numbers, stored as String in the file
-    Numeric(Option<f64>),
+    /// XXX
+    Numeric(Option<NString>),
     /// dBase type for boolean values, stored as a character in the file
     Logical(Option<bool>),
     /// dBase type for dates, stored as a string in the file
@@ -180,7 +192,8 @@ impl FieldValue {
                     FieldValue::Numeric(None)
                 } else {
                     let value_str = encoding.decode(value)?;
-                    FieldValue::Numeric(Some(value_str.parse::<f64>()?))
+                    // XXX
+                    FieldValue::Numeric(value_str.parse::<f64>().ok().map(|_s|NString(value_str.to_string())))
                 }
             }
             FieldType::Float => {
@@ -715,6 +728,43 @@ impl WritableAsDbaseField for Option<String> {
         }
     }
 }
+
+
+impl WritableAsDbaseField for NString {
+    fn write_as<E: Encoding, W: Write>(
+        &self,
+        field_info: &FieldInfo,
+        encoding: &E,
+        dst: &mut W,
+    ) -> Result<(), ErrorKind> {
+        if field_info.field_type == FieldType::Numeric {
+            let encoded_bytes = encoding.encode(self.0.as_str())?;
+            dst.write_all(&*encoded_bytes)?;
+            Ok(())
+        } else {
+            Err(ErrorKind::IncompatibleType)
+        }
+    }
+}
+
+impl WritableAsDbaseField for Option<NString> {
+    fn write_as<E: Encoding, W: Write>(
+        &self,
+        field_info: &FieldInfo,
+        encoding: &E,
+        dst: &mut W,
+    ) -> Result<(), ErrorKind> {
+        if field_info.field_type == FieldType::Numeric {
+            if let Some(s) = self {
+                s.write_as(field_info, encoding, dst)?;
+            }
+            Ok(())
+        } else {
+            Err(ErrorKind::IncompatibleType)
+        }
+    }
+}
+
 
 impl WritableAsDbaseField for &str {
     fn write_as<E: Encoding, W: Write>(
