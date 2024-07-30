@@ -298,15 +298,16 @@ fn non_unicode_codepages() {
 }
 
 #[test]
-fn sjis_codepages() {
+fn test_sjis_codepages() {
     let mut reader =
         dbase::Reader::from_path(SJIS_DBF).unwrap();
     let records = reader.read().unwrap();
 
+    println!("{:?}", records[0]);
     assert_eq!(
-        records[0].get("TEXT"),
-        Some(&dbase::FieldValue::Character(Some("Äöü!§$%&/".to_string())))
-    );
+        records[0].get("N01_002"),
+        Some(&dbase::FieldValue::BinCharacter(Some(vec![143, 192, 147, 99, 129, 69, 149, 79, 142, 125, 138, 242, 144, 252]))));
+
 
     // Write back with same encoding
     let mut cursor = Cursor::new(Vec::<u8>::new());
